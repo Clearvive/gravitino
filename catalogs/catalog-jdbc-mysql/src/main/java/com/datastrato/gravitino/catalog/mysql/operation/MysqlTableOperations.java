@@ -63,7 +63,7 @@ public class MysqlTableOperations extends JdbcTableOperations {
       boolean nullable = !columnProperties.contains(NOT_NULL);
       String defaultValue = findPropertiesValue(columnSpecs, DEFAULT);
       String comment = findPropertiesValue(columnSpecs, COMMENT);
-      List<String> properties = getColumnProperties(columnProperties);
+      List<String> properties = new ArrayList<>();
       Optional.ofNullable(indexGroupByName.get(columnName)).ifPresent(properties::addAll);
       jdbcColumns.add(
           new JdbcColumn.Builder()
@@ -72,7 +72,7 @@ public class MysqlTableOperations extends JdbcTableOperations {
               .withNullable(nullable)
               .withComment(comment)
               .withDefaultValue("NULL".equals(defaultValue) ? null : defaultValue)
-              .withProperties(properties)
+              .withAutoIncrement(StringUtils.containsIgnoreCase(columnProperties, AUTO_INCREMENT))
               .build());
     }
     Map<String, String> properties =
@@ -126,7 +126,7 @@ public class MysqlTableOperations extends JdbcTableOperations {
       boolean nullable = !columnProperties.contains(NOT_NULL);
       String defaultValue = findPropertiesValue(columnSpecs, DEFAULT);
       String comment = findPropertiesValue(columnSpecs, COMMENT);
-      List<String> properties = getColumnProperties(columnProperties);
+      List<String> properties = new ArrayList<>();
       Optional.ofNullable(indexGroupByName.get(columnName)).ifPresent(properties::addAll);
       return new JdbcColumn.Builder()
           .withName(columnName)
@@ -134,7 +134,7 @@ public class MysqlTableOperations extends JdbcTableOperations {
           .withNullable(nullable)
           .withComment(comment)
           .withDefaultValue("NULL".equals(defaultValue) ? null : defaultValue)
-          .withProperties(properties)
+          .withAutoIncrement(StringUtils.containsIgnoreCase(columnProperties, AUTO_INCREMENT))
           .build();
     }
     throw new NoSuchColumnException(
@@ -194,14 +194,6 @@ public class MysqlTableOperations extends JdbcTableOperations {
                       set.addAll(other);
                       return set;
                     }));
-  }
-
-  private List<String> getColumnProperties(String columnProperties) {
-    List<String> properties = new ArrayList<>();
-    if (StringUtils.containsIgnoreCase(columnProperties, AUTO_INCREMENT)) {
-      properties.add(AUTO_INCREMENT);
-    }
-    return properties;
   }
 
   @Override
@@ -374,13 +366,11 @@ public class MysqlTableOperations extends JdbcTableOperations {
     }
     String col = change.fieldName()[0];
     JdbcColumn column = getJdbcColumnFromCreateTable(table, col);
-    column.getProperties().remove(PRIMARY_KEY);
     JdbcColumn updateColumn =
         new JdbcColumn.Builder()
             .withName(col)
             .withDefaultValue(column.getDefaultValue())
             .withNullable(change.nullable())
-            .withProperties(column.getProperties())
             .withType(column.dataType())
             .withComment(column.comment())
             .build();
@@ -412,13 +402,11 @@ public class MysqlTableOperations extends JdbcTableOperations {
     }
     String col = updateColumnComment.fieldName()[0];
     JdbcColumn column = getJdbcColumnFromCreateTable(createTable, col);
-    column.getProperties().remove(PRIMARY_KEY);
     JdbcColumn updateColumn =
         new JdbcColumn.Builder()
             .withName(col)
             .withDefaultValue(column.getDefaultValue())
             .withNullable(column.nullable())
-            .withProperties(column.getProperties())
             .withType(column.dataType())
             .withComment(newComment)
             .build();
@@ -470,7 +458,6 @@ public class MysqlTableOperations extends JdbcTableOperations {
             .withName(newColumnName)
             .withType(column.dataType())
             .withComment(column.comment())
-            .withProperties(column.getProperties())
             .withDefaultValue(column.getDefaultValue())
             .withNullable(column.nullable())
             .build();
@@ -486,7 +473,6 @@ public class MysqlTableOperations extends JdbcTableOperations {
     JdbcColumn column = getJdbcColumnFromCreateTable(createTable, col);
     StringBuilder columnDefinition = new StringBuilder();
     columnDefinition.append("MODIFY COLUMN ").append(col);
-    column.getProperties().remove(PRIMARY_KEY);
     appendColumnDefinition(column, columnDefinition);
     if (updateColumnPosition.getPosition() instanceof TableChange.First) {
       columnDefinition.append("FIRST");
@@ -537,10 +523,7 @@ public class MysqlTableOperations extends JdbcTableOperations {
             .withName(col)
             .withType(updateColumnType.getNewDataType())
             .withComment(column.comment())
-            // Modifying a field type does not require adding its attributes. If
-            // additional attributes are required, they must be modified separately.
-            // TODO #839
-            .withProperties(null)
+            .withAutoIncrement(column.autoIncrement())
             .withDefaultValue(null)
             .withNullable(column.nullable())
             .build();
@@ -565,11 +548,11 @@ public class MysqlTableOperations extends JdbcTableOperations {
       sqlBuilder.append("DEFAULT '").append(column.getDefaultValue()).append("'").append(SPACE);
     }
 
-    // Add column properties if specified
-    if (CollectionUtils.isNotEmpty(column.getProperties())) {
-      for (String property : column.getProperties()) {
-        sqlBuilder.append(property).append(SPACE);
-      }
+    // Add column auto-increment
+    if (column.autoIncrement()) {
+      //TODO Will be implemented after indexing is supported
+      throw new UnsupportedOperationException(
+          "Mysql auto-increment columns need to be set as index columns");
     }
     // Add column comment if specified
     if (StringUtils.isNotEmpty(column.comment())) {

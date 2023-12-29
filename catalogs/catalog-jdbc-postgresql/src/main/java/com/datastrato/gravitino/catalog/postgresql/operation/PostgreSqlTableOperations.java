@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import javax.sql.DataSource;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -295,11 +294,6 @@ public class PostgreSqlTableOperations extends JdbcTableOperations {
       sqlBuilder.append("DEFAULT '").append(column.getDefaultValue()).append("'").append(SPACE);
     }
 
-    // Add column properties if specified
-    if (CollectionUtils.isNotEmpty(column.getProperties())) {
-      // TODO #804 will add properties
-      throw new IllegalArgumentException("Properties are not supported yet");
-    }
     return sqlBuilder;
   }
 

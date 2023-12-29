@@ -5,22 +5,15 @@
 package com.datastrato.gravitino.catalog.jdbc;
 
 import com.datastrato.gravitino.catalog.rel.BaseColumn;
-import java.util.List;
 
 /** Represents a column in the Jdbc column. */
 public class JdbcColumn extends BaseColumn {
   private String defaultValue;
 
-  private List<String> properties;
-
   private JdbcColumn() {}
 
   public String getDefaultValue() {
     return defaultValue;
-  }
-
-  public List<String> getProperties() {
-    return properties;
   }
 
   /** A builder class for constructing JdbcColumn instances. */
@@ -31,16 +24,8 @@ public class JdbcColumn extends BaseColumn {
      */
     private String defaultValue;
 
-    /** Attribute value of the field, such as AUTO_INCREMENT, PRIMARY KEY, etc. */
-    private List<String> properties;
-
     public Builder withDefaultValue(String defaultValue) {
       this.defaultValue = defaultValue;
-      return this;
-    }
-
-    public Builder withProperties(List<String> properties) {
-      this.properties = properties;
       return this;
     }
 
@@ -57,7 +42,7 @@ public class JdbcColumn extends BaseColumn {
       jdbcColumn.dataType = dataType;
       jdbcColumn.nullable = nullable;
       jdbcColumn.defaultValue = defaultValue;
-      jdbcColumn.properties = properties;
+      jdbcColumn.autoIncrement = autoIncrement;
       return jdbcColumn;
     }
   }

@@ -5,7 +5,6 @@
 package com.datastrato.gravitino.integration.test.catalog.jdbc.mysql;
 
 import static com.datastrato.gravitino.catalog.mysql.operation.MysqlTableOperations.AUTO_INCREMENT;
-import static com.datastrato.gravitino.catalog.mysql.operation.MysqlTableOperations.PRIMARY_KEY;
 
 import com.datastrato.gravitino.catalog.jdbc.JdbcColumn;
 import com.datastrato.gravitino.catalog.jdbc.JdbcTable;
@@ -49,26 +48,9 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             .withType(INT)
             .withNullable(false)
             .withComment("set primary key")
-            .withProperties(
-                new ArrayList<String>() {
-                  {
-                    add(AUTO_INCREMENT);
-                    add(PRIMARY_KEY);
-                  }
-                })
             .build());
     columns.add(
-        new JdbcColumn.Builder()
-            .withName("col_3")
-            .withType(INT)
-            .withProperties(
-                new ArrayList<String>() {
-                  {
-                    add("UNIQUE KEY");
-                  }
-                })
-            .withNullable(true)
-            .build());
+        new JdbcColumn.Builder().withName("col_3").withType(INT).withNullable(true).build());
     columns.add(
         new JdbcColumn.Builder()
             .withName("col_4")
@@ -233,7 +215,6 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             .withName(col_1.name())
             .withType(INT)
             .withComment(col_1.comment())
-            .withProperties(col_1.getProperties())
             .withNullable(col_1.nullable())
             .withDefaultValue(col_1.getDefaultValue())
             .build();
@@ -242,7 +223,6 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             .withName(col_2.name())
             .withType(col_2.dataType())
             .withComment(newComment)
-            .withProperties(col_2.getProperties())
             .withNullable(col_2.nullable())
             .withDefaultValue(col_2.getDefaultValue())
             .build();
@@ -267,7 +247,6 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             .withName(newColName_1)
             .withType(col_1.dataType())
             .withComment(col_1.comment())
-            .withProperties(col_1.getProperties())
             .withNullable(col_1.nullable())
             .withDefaultValue(col_1.getDefaultValue())
             .build();
@@ -276,7 +255,6 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             .withName(newColName_2)
             .withType(col_2.dataType())
             .withComment(col_2.comment())
-            .withProperties(col_2.getProperties())
             .withNullable(col_2.nullable())
             .withDefaultValue(col_2.getDefaultValue())
             .build();
@@ -304,7 +282,6 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             .withName(col_2.name())
             .withType(col_2.dataType())
             .withComment(newCol2Comment)
-            .withProperties(col_2.getProperties())
             .withDefaultValue(col_2.getDefaultValue())
             .withNullable(col_2.nullable())
             .build());
