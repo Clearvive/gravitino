@@ -4,6 +4,9 @@
  */
 package com.datastrato.gravitino.catalog.mysql.operation;
 
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.COLLATE;
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.ENGINE;
+
 import com.datastrato.gravitino.StringIdentifier;
 import com.datastrato.gravitino.catalog.jdbc.JdbcColumn;
 import com.datastrato.gravitino.catalog.jdbc.JdbcTable;
@@ -16,6 +19,7 @@ import com.datastrato.gravitino.meta.AuditInfo;
 import com.datastrato.gravitino.rel.TableChange;
 import com.datastrato.gravitino.rel.expressions.transforms.Transform;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -78,11 +82,12 @@ public class MysqlTableOperations extends JdbcTableOperations {
     Map<String, String> properties =
         parseOrderedKeyValuePairs(createTable.getTableOptionsStrings().toArray(new String[0]));
 
-    String remove = properties.remove(COMMENT);
+    loadTableProperties(databaseName, tableName).forEach(properties::putIfAbsent);
+
     return new JdbcTable.Builder()
         .withName(tableName)
         .withColumns(jdbcColumns.toArray(new JdbcColumn[0]))
-        .withComment(remove)
+        .withComment(properties.remove(COMMENT))
         .withProperties(properties)
         .withAuditInfo(AuditInfo.EMPTY)
         .build();
@@ -167,6 +172,40 @@ public class MysqlTableOperations extends JdbcTableOperations {
   }
 
   /**
+   * @param databaseName database name
+   * @param tableName table name
+   * @return table properties
+   */
+  private Map<String, String> loadTableProperties(String databaseName, String tableName) {
+    try (Connection connection = getConnection(databaseName)) {
+      try (PreparedStatement preparedStatement =
+          connection.prepareStatement(
+              "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?")) {
+        preparedStatement.setString(1, databaseName);
+        preparedStatement.setString(2, tableName);
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+          if (!resultSet.next()) {
+            throw new NoSuchTableException("Table " + tableName + " does not exist.");
+          }
+          return Collections.unmodifiableMap(
+              new HashMap<String, String>() {
+                {
+                  put(ENGINE, resultSet.getString(ENGINE));
+                  put(COLLATE, resultSet.getString("TABLE_COLLATION"));
+                  String incrementOffset = resultSet.getString(AUTO_INCREMENT);
+                  if (StringUtils.isNotEmpty(incrementOffset)) {
+                    put(AUTO_INCREMENT, incrementOffset);
+                  }
+                }
+              });
+        }
+      }
+    } catch (final SQLException se) {
+      throw this.exceptionMapper.toGravitinoException(se);
+    }
+  }
+
+  /**
    * @param indexes table index information object. For example: KEY `idx_name` (`name`) USING BTREE
    * @return Get index information grouped by column name. For example: {name=[KEY, BTREE]}
    */
@@ -235,25 +274,20 @@ public class MysqlTableOperations extends JdbcTableOperations {
       }
     }
     sqlBuilder.append("\n)");
-    // Add table properties if any
-    if (MapUtils.isNotEmpty(properties)) {
-      // TODO #804 Properties will be unified in the future.
-      throw new UnsupportedOperationException("Properties are not supported yet");
-      //      StringJoiner joiner = new StringJoiner(SPACE + SPACE);
-      //      for (Map.Entry<String, String> entry : properties.entrySet()) {
-      //        joiner.add(entry.getKey() + "=" + entry.getValue());
-      //      }
-      //      sqlBuilder.append(joiner);
-    }
 
     // Add table comment if specified
     if (StringUtils.isNotEmpty(comment)) {
       sqlBuilder.append(" COMMENT='").append(comment).append("'");
     }
 
+    if (MapUtils.isNotEmpty(properties)) {
+      sqlBuilder.append(
+          properties.entrySet().stream()
+              .map(entry -> String.format("%s = %s", entry.getKey(), entry.getValue()))
+              .collect(Collectors.joining(",\n", "\n", "")));
+    }
     // Return the generated SQL statement
-    String result = sqlBuilder.toString();
-
+    String result = sqlBuilder.append(";").toString();
     LOG.info("Generated create table:{} sql: {}", tableName, result);
     return result;
   }
@@ -338,9 +372,6 @@ public class MysqlTableOperations extends JdbcTableOperations {
             "Unsupported table change type: " + change.getClass().getName());
       }
     }
-    if (!setProperties.isEmpty()) {
-      alterSql.add(generateTableProperties(setProperties));
-    }
 
     // Last modified comment
     if (null != updateComment) {
@@ -356,6 +387,10 @@ public class MysqlTableOperations extends JdbcTableOperations {
         }
       }
       alterSql.add("COMMENT '" + newComment + "'");
+    }
+
+    if (!setProperties.isEmpty()) {
+      alterSql.add(generateTableProperties(setProperties));
     }
 
     if (CollectionUtils.isEmpty(alterSql)) {
@@ -388,13 +423,11 @@ public class MysqlTableOperations extends JdbcTableOperations {
   }
 
   private String generateTableProperties(List<TableChange.SetProperty> setProperties) {
-    // TODO #804 Properties will be unified in the future.
-    //    return setProperties.stream()
-    //        .map(
-    //            setProperty ->
-    //                String.format("%s = %s", setProperty.getProperty(), setProperty.getValue()))
-    //        .collect(Collectors.joining(",\n"));
-    return "";
+    return setProperties.stream()
+        .map(
+            setProperty ->
+                String.format("%s = %s", setProperty.getProperty(), setProperty.getValue()))
+        .collect(Collectors.joining(",\n"));
   }
 
   private CreateTable getOrCreateTable(

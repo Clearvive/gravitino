@@ -5,14 +5,8 @@
 package com.datastrato.gravitino.catalog.jdbc;
 
 import com.datastrato.gravitino.catalog.BasePropertiesMetadata;
-import com.datastrato.gravitino.catalog.PropertyEntry;
-import java.util.Collections;
-import java.util.Map;
 
-public class JdbcTablePropertiesMetadata extends BasePropertiesMetadata {
+public abstract class JdbcTablePropertiesMetadata extends BasePropertiesMetadata {
 
-  @Override
-  protected Map<String, PropertyEntry<?>> specificPropertyEntries() {
-    return Collections.emptyMap();
-  }
+  public static final String COMMENT = "comment";
 }

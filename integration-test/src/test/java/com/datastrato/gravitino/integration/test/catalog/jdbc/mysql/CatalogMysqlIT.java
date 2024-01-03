@@ -4,6 +4,10 @@
  */
 package com.datastrato.gravitino.integration.test.catalog.jdbc.mysql;
 
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.COLLATE;
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.DEFAULT_CHARSET;
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.ENGINE;
+import static com.datastrato.gravitino.catalog.mysql.operation.MysqlTableOperations.AUTO_INCREMENT;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.datastrato.gravitino.Catalog;
@@ -194,6 +198,10 @@ public class CatalogMysqlIT extends AbstractIT {
 
   private Map<String, String> createProperties() {
     Map<String, String> properties = Maps.newHashMap();
+    properties.put(ENGINE, "InnoDB");
+    properties.put(AUTO_INCREMENT, "10");
+    properties.put(DEFAULT_CHARSET, "utf8mb3");
+    properties.put(COLLATE, "utf8mb3_unicode_ci");
     return properties;
   }
 

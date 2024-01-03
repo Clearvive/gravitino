@@ -4,6 +4,9 @@
  */
 package com.datastrato.gravitino.integration.test.catalog.jdbc.mysql;
 
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.COLLATE;
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.DEFAULT_CHARSET;
+import static com.datastrato.gravitino.catalog.mysql.MysqlTablePropertiesMetadata.ENGINE;
 import static com.datastrato.gravitino.catalog.mysql.operation.MysqlTableOperations.AUTO_INCREMENT;
 import static com.datastrato.gravitino.catalog.mysql.operation.MysqlTableOperations.PRIMARY_KEY;
 
@@ -77,9 +80,10 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             .withNullable(false)
             .build());
     Map<String, String> properties = new HashMap<>();
-    // TODO #804 Properties will be unified in the future.
-    //    properties.put("ENGINE", "InnoDB");
-    //    properties.put(AUTO_INCREMENT, "10");
+    properties.put(ENGINE, "InnoDB");
+    properties.put(AUTO_INCREMENT, "10");
+    properties.put(DEFAULT_CHARSET, "utf8mb3");
+    properties.put(COLLATE, "utf8mb3_general_ci");
     // create table
     TABLE_OPERATIONS.create(
         TEST_DB_NAME,
@@ -117,7 +121,11 @@ public class TestMysqlTableOperations extends TestMysqlAbstractIT {
             new String[] {newColumn.name()},
             newColumn.dataType(),
             newColumn.comment(),
-            TableChange.ColumnPosition.after("col_1")));
+            TableChange.ColumnPosition.after("col_1")),
+        TableChange.setProperty(ENGINE, "MyISAM"),
+        TableChange.setProperty(COLLATE, "utf8mb3_unicode_ci"));
+    properties.put(ENGINE, "MyISAM");
+    properties.put(COLLATE, "utf8mb3_unicode_ci");
     load = TABLE_OPERATIONS.load(TEST_DB_NAME, newName);
     List<JdbcColumn> alterColumns =
         new ArrayList<JdbcColumn>() {

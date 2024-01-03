@@ -83,18 +83,21 @@ public class JdbcCatalogOperations implements CatalogOperations, SupportsSchemas
    * @param jdbcTypeConverter The type converter to be used by the operations.
    * @param databaseOperation The database operations to be used by the operations.
    * @param tableOperation The table operations to be used by the operations.
+   * @param jdbcTablePropertiesMetadata The table properties metadata to be used by the operations.
    */
   public JdbcCatalogOperations(
       CatalogEntity entity,
       JdbcExceptionConverter exceptionConverter,
       JdbcTypeConverter jdbcTypeConverter,
       JdbcDatabaseOperations databaseOperation,
-      JdbcTableOperations tableOperation) {
+      JdbcTableOperations tableOperation,
+      JdbcTablePropertiesMetadata jdbcTablePropertiesMetadata) {
     this.entity = entity;
     this.exceptionConverter = exceptionConverter;
     this.jdbcTypeConverter = jdbcTypeConverter;
     this.databaseOperation = databaseOperation;
     this.tableOperation = tableOperation;
+    this.jdbcTablePropertiesMetadata = jdbcTablePropertiesMetadata;
   }
 
   /**
@@ -119,7 +122,6 @@ public class JdbcCatalogOperations implements CatalogOperations, SupportsSchemas
     this.dataSource = DataSourceUtils.createDataSource(jdbcConfig);
     this.databaseOperation.initialize(dataSource, exceptionConverter, resultConf);
     this.tableOperation.initialize(dataSource, exceptionConverter, jdbcTypeConverter, resultConf);
-    this.jdbcTablePropertiesMetadata = new JdbcTablePropertiesMetadata();
     this.jdbcSchemaPropertiesMetadata = new JdbcSchemaPropertiesMetadata();
   }
 
