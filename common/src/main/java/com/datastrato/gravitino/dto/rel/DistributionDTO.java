@@ -12,6 +12,7 @@ import com.datastrato.gravitino.json.JsonUtils;
 import com.datastrato.gravitino.rel.expressions.Expression;
 import com.datastrato.gravitino.rel.expressions.distributions.Distribution;
 import com.datastrato.gravitino.rel.expressions.distributions.Strategy;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
@@ -22,14 +23,16 @@ import java.util.Arrays;
 public class DistributionDTO implements Distribution {
 
   public static final DistributionDTO NONE =
-      new Builder().withStrategy(Strategy.HASH).withNumber(0).withArgs(EMPTY_ARGS).build();
+      new Builder().withStrategy(Strategy.NONE).withNumber(0).withArgs(EMPTY_ARGS).build();
 
   // Distribution strategy/method
   private final Strategy strategy;
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   // Number of buckets/distribution
   private final int number;
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private final FunctionArg[] args;
 
   private DistributionDTO(Strategy strategy, int number, FunctionArg[] args) {

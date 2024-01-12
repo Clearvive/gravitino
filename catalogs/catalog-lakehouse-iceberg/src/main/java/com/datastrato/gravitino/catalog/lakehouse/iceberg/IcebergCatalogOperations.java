@@ -27,7 +27,6 @@ import com.datastrato.gravitino.rel.Table;
 import com.datastrato.gravitino.rel.TableCatalog;
 import com.datastrato.gravitino.rel.TableChange;
 import com.datastrato.gravitino.rel.expressions.distributions.Distribution;
-import com.datastrato.gravitino.rel.expressions.distributions.Distributions;
 import com.datastrato.gravitino.rel.expressions.sorts.SortOrder;
 import com.datastrato.gravitino.rel.expressions.transforms.Transform;
 import com.datastrato.gravitino.utils.MapUtils;
@@ -483,10 +482,6 @@ public class IcebergCatalogOperations implements CatalogOperations, SupportsSche
       SortOrder[] sortOrders)
       throws NoSuchSchemaException, TableAlreadyExistsException {
     try {
-      if (!Distributions.NONE.equals(distribution)) {
-        throw new UnsupportedOperationException("Iceberg does not support distribution");
-      }
-
       NameIdentifier schemaIdent = NameIdentifier.of(tableIdent.namespace().levels());
       if (!schemaExists(schemaIdent)) {
         LOG.warn("Iceberg schema (database) does not exist: {}", schemaIdent);
@@ -512,7 +507,7 @@ public class IcebergCatalogOperations implements CatalogOperations, SupportsSche
               .withPartitioning(partitioning)
               .withSortOrders(sortOrders)
               .withProperties(properties)
-              .withDistribution(Distributions.NONE)
+              .withDistribution(distribution)
               .withAuditInfo(
                   new AuditInfo.Builder()
                       .withCreator(currentUser())
