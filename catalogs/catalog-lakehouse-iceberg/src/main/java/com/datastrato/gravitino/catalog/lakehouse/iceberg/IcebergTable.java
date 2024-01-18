@@ -18,6 +18,7 @@ import com.datastrato.gravitino.rel.expressions.distributions.Distribution;
 import com.datastrato.gravitino.rel.expressions.distributions.Distributions;
 import com.datastrato.gravitino.rel.expressions.sorts.SortOrder;
 import com.datastrato.gravitino.rel.expressions.transforms.Transform;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import java.util.Map;
@@ -55,7 +56,7 @@ public class IcebergTable extends BaseTable {
   public CreateTableRequest toCreateTableRequest() {
     Schema schema = ConvertUtil.toIcebergSchema(this);
     properties = properties == null ? Maps.newHashMap() : Maps.newHashMap(properties);
-    convertDistribution();
+    properties.put(DISTRIBUTION_MODE, transformDistribution(distribution));
     Map<String, String> resultProperties =
         Maps.newHashMap(IcebergTableOpsHelper.removeReservedProperties(properties));
     resultProperties.putIfAbsent(ICEBERG_COMMENT_FIELD_NAME, comment);
@@ -70,10 +71,16 @@ public class IcebergTable extends BaseTable {
     return builder.build();
   }
 
-  /** Convert the distribution of Iceberg to the distribution of Gravitino. */
-  private void convertDistribution() {
+  /**
+   * Transforms the gravitino distribution to the distribution mode name of the iceberg table.
+   *
+   * @param distribution The distribution of the table.
+   * @return The distribution mode name of the iceberg table.
+   */
+  @VisibleForTesting
+  public String transformDistribution(Distribution distribution) {
     if (null == distribution) {
-      properties.put(DISTRIBUTION_MODE, DistributionMode.NONE.modeName());
+      return DistributionMode.NONE.modeName();
     } else {
       switch (distribution.strategy()) {
         case HASH:
@@ -83,8 +90,7 @@ public class IcebergTable extends BaseTable {
           Preconditions.checkArgument(
               ArrayUtils.isNotEmpty(partitioning),
               "Iceberg's Distribution Mode.HASH is distributed based on partition, but the partition is empty.");
-          properties.put(DISTRIBUTION_MODE, DistributionMode.HASH.modeName());
-          break;
+          return DistributionMode.HASH.modeName();
         case RANGE:
           Preconditions.checkArgument(
               ArrayUtils.isEmpty(distribution.expressions()),
@@ -92,11 +98,9 @@ public class IcebergTable extends BaseTable {
           Preconditions.checkArgument(
               ArrayUtils.isNotEmpty(partitioning) || ArrayUtils.isNotEmpty(sortOrders),
               "Iceberg's Distribution Mode.RANGE is distributed based on sortOrder or partition, but both are empty.");
-          properties.put(DISTRIBUTION_MODE, DistributionMode.RANGE.modeName());
-          break;
+          return DistributionMode.RANGE.modeName();
         case NONE:
-          properties.put(DISTRIBUTION_MODE, DistributionMode.NONE.modeName());
-          break;
+          return DistributionMode.NONE.modeName();
         default:
           throw new IllegalArgumentException(
               "Iceberg unsupported distribution strategy: " + distribution.strategy());
