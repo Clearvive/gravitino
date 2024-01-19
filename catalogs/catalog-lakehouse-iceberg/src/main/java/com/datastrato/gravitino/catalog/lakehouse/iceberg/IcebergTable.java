@@ -78,7 +78,7 @@ public class IcebergTable extends BaseTable {
    * @return The distribution mode name of the iceberg table.
    */
   @VisibleForTesting
-  public String transformDistribution(Distribution distribution) {
+  protected String transformDistribution(Distribution distribution) {
     if (null == distribution) {
       return DistributionMode.NONE.modeName();
     } else {
