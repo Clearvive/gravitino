@@ -78,33 +78,29 @@ public class IcebergTable extends BaseTable {
    * @return The distribution mode name of the iceberg table.
    */
   @VisibleForTesting
-  protected String transformDistribution(Distribution distribution) {
-    if (null == distribution) {
-      return DistributionMode.NONE.modeName();
-    } else {
-      switch (distribution.strategy()) {
-        case HASH:
-          Preconditions.checkArgument(
-              ArrayUtils.isEmpty(distribution.expressions()),
-              "Iceberg's Distribution Mode.HASH does not support set expressions.");
-          Preconditions.checkArgument(
-              ArrayUtils.isNotEmpty(partitioning),
-              "Iceberg's Distribution Mode.HASH is distributed based on partition, but the partition is empty.");
-          return DistributionMode.HASH.modeName();
-        case RANGE:
-          Preconditions.checkArgument(
-              ArrayUtils.isEmpty(distribution.expressions()),
-              "Iceberg's Distribution Mode.RANGE not support set expressions.");
-          Preconditions.checkArgument(
-              ArrayUtils.isNotEmpty(partitioning) || ArrayUtils.isNotEmpty(sortOrders),
-              "Iceberg's Distribution Mode.RANGE is distributed based on sortOrder or partition, but both are empty.");
-          return DistributionMode.RANGE.modeName();
-        case NONE:
-          return DistributionMode.NONE.modeName();
-        default:
-          throw new IllegalArgumentException(
-              "Iceberg unsupported distribution strategy: " + distribution.strategy());
-      }
+  String transformDistribution(Distribution distribution) {
+    switch (distribution.strategy()) {
+      case HASH:
+        Preconditions.checkArgument(
+            ArrayUtils.isEmpty(distribution.expressions()),
+            "Iceberg's Distribution Mode.HASH does not support set expressions.");
+        Preconditions.checkArgument(
+            ArrayUtils.isNotEmpty(partitioning),
+            "Iceberg's Distribution Mode.HASH is distributed based on partition, but the partition is empty.");
+        return DistributionMode.HASH.modeName();
+      case RANGE:
+        Preconditions.checkArgument(
+            ArrayUtils.isEmpty(distribution.expressions()),
+            "Iceberg's Distribution Mode.RANGE not support set expressions.");
+        Preconditions.checkArgument(
+            ArrayUtils.isNotEmpty(partitioning) || ArrayUtils.isNotEmpty(sortOrders),
+            "Iceberg's Distribution Mode.RANGE is distributed based on sortOrder or partition, but both are empty.");
+        return DistributionMode.RANGE.modeName();
+      case NONE:
+        return DistributionMode.NONE.modeName();
+      default:
+        throw new IllegalArgumentException(
+            "Iceberg unsupported distribution strategy: " + distribution.strategy());
     }
   }
 
