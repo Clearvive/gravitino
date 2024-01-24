@@ -72,7 +72,7 @@ public class IcebergTable extends BaseTable {
   }
 
   /**
-   * Transforms the gravitino distribution to the distribution mode name of the iceberg table.
+   * Transforms the gravitino distribution to the distribution mode name of the Iceberg table.
    *
    * @param distribution The distribution of the table.
    * @return The distribution mode name of the iceberg table.

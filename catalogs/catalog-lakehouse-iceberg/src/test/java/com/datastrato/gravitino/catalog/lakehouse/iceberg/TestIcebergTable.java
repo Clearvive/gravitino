@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.iceberg.DistributionMode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -554,7 +555,9 @@ public class TestIcebergTable {
             .withColumns(icebergColumns.toArray(new IcebergColumn[0]))
             .withComment("test_table")
             .build();
-    Assertions.assertDoesNotThrow(() -> icebergTable.transformDistribution(Distributions.NONE));
+    String none =
+        Assertions.assertDoesNotThrow(() -> icebergTable.transformDistribution(Distributions.NONE));
+    Assertions.assertEquals(none, DistributionMode.NONE.modeName());
 
     IllegalArgumentException illegalArgumentException =
         Assertions.assertThrows(
@@ -591,9 +594,15 @@ public class TestIcebergTable {
             .withColumns(icebergColumns.toArray(new IcebergColumn[0]))
             .withComment("test_table2")
             .build();
-    Assertions.assertDoesNotThrow(() -> newTable.transformDistribution(Distributions.NONE));
-    Assertions.assertDoesNotThrow(() -> newTable.transformDistribution(Distributions.HASH));
-    Assertions.assertDoesNotThrow(() -> newTable.transformDistribution(Distributions.RANGE));
+    String distributionName =
+        Assertions.assertDoesNotThrow(() -> newTable.transformDistribution(Distributions.NONE));
+    Assertions.assertEquals(distributionName, DistributionMode.NONE.modeName());
+    distributionName =
+        Assertions.assertDoesNotThrow(() -> newTable.transformDistribution(Distributions.HASH));
+    Assertions.assertEquals(distributionName, DistributionMode.HASH.modeName());
+    distributionName =
+        Assertions.assertDoesNotThrow(() -> newTable.transformDistribution(Distributions.RANGE));
+    Assertions.assertEquals(distributionName, DistributionMode.RANGE.modeName());
   }
 
   protected static String genRandomName() {
