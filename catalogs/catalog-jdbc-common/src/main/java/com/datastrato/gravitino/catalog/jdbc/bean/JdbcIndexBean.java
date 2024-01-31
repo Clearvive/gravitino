@@ -7,9 +7,7 @@ package com.datastrato.gravitino.catalog.jdbc.bean;
 import com.datastrato.gravitino.rel.indexes.Index;
 import java.util.Objects;
 
-/**
- * Store JDBC index information.
- */
+/** Store JDBC index information. */
 public class JdbcIndexBean {
 
   private final Index.IndexType indexType;
@@ -18,9 +16,7 @@ public class JdbcIndexBean {
 
   private final String name;
 
-  /**
-   * Used for sorting
-   */
+  /** Used for sorting */
   private final int order;
 
   public JdbcIndexBean(Index.IndexType indexType, String colName, String name, int order) {
